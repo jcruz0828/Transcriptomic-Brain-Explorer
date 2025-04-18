@@ -3,6 +3,7 @@
 
 import dynamic from 'next/dynamic';
 import { useEffect, useState } from 'react';
+import pako from 'pako';
 
 const Plot = dynamic(() => import('react-plotly.js'), { ssr: false });
 
@@ -26,9 +27,17 @@ export default function BrainGraph({ region }: { region: number }) {
   const [data, setData] = useState<Record<number, BrainRegion> | null>(null);
 
   useEffect(() => {
-    fetch('/regions/brain_data.json')
-      .then((res) => res.json())
-      .then((json) => setData(json));
+    const fetchAndUnzip = async () => {
+      const res = await fetch("https://kxufiygkshxnq834.public.blob.vercel-storage.com/brain_graph.json.gz");
+      const buffer = await res.arrayBuffer();
+
+      const decompressed = pako.ungzip(new Uint8Array(buffer), { to: "string" });
+      const json = JSON.parse(decompressed);
+
+      setData(json);
+    };
+
+    fetchAndUnzip();
   }, []);
 
   if (!data) return <p className="text-white/60">Loading data...</p>;
