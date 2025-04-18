@@ -28,17 +28,35 @@ export default function BrainGraph({ region }: { region: number }) {
 
   useEffect(() => {
     const fetchAndUnzip = async () => {
-      const res = await fetch("https://kxufiygkshxnq834.public.blob.vercel-storage.com/brain_graph.json.gz");
-      const buffer = await res.arrayBuffer();
-
-      const decompressed = pako.ungzip(new Uint8Array(buffer), { to: "string" });
-      const json = JSON.parse(decompressed);
-
-      setData(json);
+      try {
+        console.log("🚀 Fetching GZ file...");
+  
+        const res = await fetch("https://kxufiygkshxnq834.public.blob.vercel-storage.com/AHBA_Transcriptomic_Explorer.json.gz");
+  
+        // Check if the response is OK
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+  
+        console.log("📦 GZ file fetched, now reading buffer...");
+        const compressed = await res.arrayBuffer();
+  
+        console.log("🔓 Unzipping...");
+        const decompressed = pako.ungzip(new Uint8Array(compressed), { to: "string" });
+  
+        console.log("✅ Successfully unzipped. Parsing JSON...");
+        const json = JSON.parse(decompressed);
+  
+        console.log("🧠 Loaded data keys:", Object.keys(json).slice(0, 5)); // Log a sample
+        setData(json);
+      } catch (err) {
+        console.error("❌ Failed to load brain data:", err);
+      }
     };
-
+  
     fetchAndUnzip();
   }, []);
+  
 
   if (!data) return <p className="text-white/60">Loading data...</p>;
   if (!data[region]) return <p className="text-red-500">Region not found.</p>;
